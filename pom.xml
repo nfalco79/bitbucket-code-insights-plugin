@@ -11,7 +11,7 @@
 
     <groupId>io.github.nfalco79</groupId>
     <artifactId>bitbucket-code-insights</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <url>https://github.com/nfalco79/bitbucket-code-insights-plugin</url>
     <name>Bitbucket Code Insights plugin</name>
@@ -48,7 +48,7 @@
         <url>https://github.com/nfalco79/${project.artifactId}-plugin</url>
         <connection>scm:git:git@github.com:nfalco79/${project.artifactId}-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:nfalco79/${project.artifactId}-plugin.git</developerConnection>
-        <tag>bitbucket-code-insights-1.0.1</tag>
+        <tag>bitbucket-code-insights-1.0.0</tag>
     </scm>
 
     <repositories>
