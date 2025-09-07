@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -12,7 +11,7 @@
 
     <groupId>io.github.nfalco79</groupId>
     <artifactId>bitbucket-code-insights</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.0</version>
     <packaging>hpi</packaging>
     <url>https://github.com/nfalco79/bitbucket-code-insights-plugin</url>
     <name>Bitbucket Code Insights plugin</name>
@@ -49,7 +48,7 @@
         <url>https://github.com/nfalco79/${project.artifactId}-plugin</url>
         <connection>scm:git:git@github.com:nfalco79/${project.artifactId}-plugin.git</connection>
         <developerConnection>scm:git:git@github.com:nfalco79/${project.artifactId}-plugin.git</developerConnection>
-        <tag>${scmTag}</tag>
+        <tag>bitbucket-code-insights-1.0.0</tag>
     </scm>
 
     <repositories>
