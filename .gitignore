@@ -1,0 +1,9 @@
+.idea/
+bin/
+target/
+work/
+*.iml
+.DS_Store
+/.project
+/.classpath
+/.checkstyle

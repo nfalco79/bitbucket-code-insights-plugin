@@ -1,0 +1,225 @@
+/*
+ * Copyright 2025 Nikolas Falco
+ *
+ * Licensed under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package io.jenkins.plugins.codeinsights;
+
+import com.cloudbees.jenkins.plugins.bitbucket.BitbucketSCMSource;
+import com.cloudbees.jenkins.plugins.bitbucket.PullRequestSCMRevision;
+import edu.umd.cs.findbugs.annotations.CheckForNull;
+import hudson.model.AbstractProject;
+import hudson.model.Job;
+import hudson.model.Run;
+import hudson.plugins.git.GitSCM;
+import hudson.scm.NullSCM;
+import hudson.scm.SCM;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Optional;
+import jenkins.plugins.git.AbstractGitSCMSource;
+import jenkins.plugins.git.GitSCMSource;
+import jenkins.scm.api.SCMHead;
+import jenkins.scm.api.SCMRevision;
+import jenkins.scm.api.SCMRevisionAction;
+import jenkins.scm.api.SCMSource;
+import jenkins.triggers.SCMTriggerItem;
+import org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition;
+import org.jenkinsci.plugins.workflow.flow.FlowDefinition;
+import org.jenkinsci.plugins.workflow.job.WorkflowJob;
+
+/**
+ * Facade to {@link BitbucketSCMSource} and {@link GitSCM} in Jenkins.
+ * Used for finding a supported SCM of a job.
+ */
+public class SCMFacade {
+    /**
+     * Find {@link GitSCM} (or Bitbucket repository) used by the {@code job}.
+     *
+     * @param job
+     *         the Jenkins project
+     * @return the found Bitbucket SCM source used or empty
+     */
+    @CheckForNull
+    public SCMSource findSCMSource(final Job<?, ?> job) {
+        return SCMSource.SourceByItem.findSource(job);
+    }
+
+    /**
+     * Find {@link BitbucketSCMSource} used by the {@code job}.
+     *
+     * @param job
+     *         the Jenkins project
+     * @return the found Bitbucket SCM source used or empty
+     */
+    public Optional<BitbucketSCMSource> findBitbucketSCMSource(final Job<?, ?> job) {
+        SCMSource source = findSCMSource(job);
+        return source instanceof BitbucketSCMSource scmSource ? Optional.of(scmSource) : Optional.empty();
+    }
+
+    /**
+     * Find {@link GitSCMSource} used by the {@code job}.
+     *
+     * @param job
+     *         the Jenkins project
+     * @return the found Git SCM source or empty
+     */
+    public Optional<GitSCMSource> findGitSCMSource(final Job<?, ?> job) {
+        SCMSource source = findSCMSource(job);
+        return source instanceof GitSCMSource scmSource ? Optional.of(scmSource) : Optional.empty();
+    }
+
+    /**
+     * Finds the {@link GitSCM} used by the {@code run}.
+     *
+     * @param run
+     *         the run to get the SCM from
+     * @return the found GitSCM or empty
+     */
+    public Optional<GitSCM> findGitSCM(final Run<?, ?> run) {
+        SCM scm = getSCM(run);
+
+        return toGitScm(scm);
+    }
+
+    private Optional<GitSCM> toGitScm(final SCM scm) {
+        if (scm instanceof GitSCM gitSCM) {
+            return Optional.of(gitSCM);
+        }
+
+        return Optional.empty();
+    }
+
+    /**
+     * Find {@link SCMHead} (or branch) used by the {@code job}.
+     *
+     * @param job
+     *         the Jenkins project
+     * @return the found SCM head or empty
+     */
+    public Optional<SCMHead> findHead(final Job<?, ?> job) {
+        SCMHead head = SCMHead.HeadByItem.findHead(job);
+        return Optional.ofNullable(head);
+    }
+
+    /**
+     * Fetch the current {@link SCMRevision} used by the {@code head} of the {@code source}.
+     *
+     * @param source
+     *         the GitHub repository
+     * @param head
+     *         the branch
+     * @return the fetched revision or empty
+     */
+    public Optional<SCMRevision> findRevision(final SCMSource source, final SCMHead head) {
+        try {
+            return Optional.ofNullable(source.fetch(head, null));
+        }
+        catch (IOException | InterruptedException e) {
+            throw new IllegalStateException(String.format("Could not fetch revision from repository: %s and branch: %s", source.getId(), head.getName()), e);
+        }
+    }
+
+    /**
+     * Find the current {@link SCMRevision} of the {@code source} and {@code run} locally through
+     * {@link jenkins.scm.api.SCMRevisionAction}.
+     *
+     * @param source
+     *         the GitHub repository
+     * @param run
+     *         the Jenkins run
+     * @return the found revision or empty
+     */
+    public Optional<SCMRevision> findRevision(final SCMSource source, final Run<?, ?> run) {
+        return Optional.ofNullable(SCMRevisionAction.getRevision(source, run));
+    }
+
+    /**
+     * Find the hash value in {@code revision}.
+     *
+     * @param revision
+     *         the revision for a build
+     * @return the found hash or empty
+     */
+    public Optional<String> findHash(final SCMRevision revision) {
+        if (revision instanceof AbstractGitSCMSource.SCMRevisionImpl scmRev) {
+            return Optional.of(scmRev.getHash());
+        }
+        else if (revision instanceof PullRequestSCMRevision prRev) {
+            return findHash(prRev.getPull());
+        }
+        else {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Returns the SCM in a given build. If no SCM can be determined, then a {@link NullSCM} instance will be returned.
+     *
+     * @param run
+     *         the build to get the SCM from
+     *
+     * @return the SCM
+     */
+    public SCM getSCM(final Run<?, ?> run) {
+        return getSCM(run.getParent());
+    }
+
+    /**
+     * Returns the SCM in a given job. If no SCM can be determined, then a {@link NullSCM} instance will be returned.
+     *
+     * @param job
+     *         the job to get the SCM from
+     *
+     * @return the SCM
+     */
+    public SCM getSCM(final Job<?, ?> job) {
+        if (job instanceof AbstractProject) {
+            return extractFromProject((AbstractProject<?, ?>) job);
+        }
+        else if (job instanceof SCMTriggerItem) {
+            return extractFromPipeline(job);
+        }
+        return new NullSCM();
+    }
+
+    private SCM extractFromPipeline(final Job<?, ?> job) {
+        Collection<? extends SCM> scms = ((SCMTriggerItem) job).getSCMs();
+        if (!scms.isEmpty()) {
+            return scms.iterator().next();
+        }
+
+        if (job instanceof WorkflowJob workflowJob) {
+            FlowDefinition definition = workflowJob.getDefinition();
+            if (definition instanceof CpsScmFlowDefinition cpsFlow) {
+                return cpsFlow.getScm();
+            }
+        }
+
+        return new NullSCM();
+    }
+
+    private SCM extractFromProject(final AbstractProject<?, ?> job) {
+        if (job.getScm() != null) {
+            return job.getScm();
+        }
+
+        SCM scm = job.getRootProject().getScm();
+        if (scm != null) {
+            return scm;
+        }
+
+        return new NullSCM();
+    }
+}
