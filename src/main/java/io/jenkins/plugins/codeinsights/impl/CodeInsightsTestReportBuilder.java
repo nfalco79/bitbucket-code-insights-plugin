@@ -17,7 +17,6 @@
 package io.jenkins.plugins.codeinsights.impl;
 
 import hudson.Util;
-import hudson.model.Result;
 import hudson.model.Run;
 import hudson.tasks.junit.TestResult;
 import hudson.tasks.junit.TestResultAction;
@@ -54,10 +53,10 @@ public class CodeInsightsTestReportBuilder implements CodeInsightsReporBuilder {
             } else {
                 testReport.setDetails("Reports no tests failure");
             }
-            if (Result.SUCCESS.equals(testResult.getBuildResult())) {
-                testReport.setResult(ReportResult.PASSED);
-            } else {
+            if (testResult.getFailCount() > 0) {
                 testReport.setResult(ReportResult.FAILED);
+            } else {
+                testReport.setResult(ReportResult.PASSED);
             }
             return Optional.of(testReport);
         } else {

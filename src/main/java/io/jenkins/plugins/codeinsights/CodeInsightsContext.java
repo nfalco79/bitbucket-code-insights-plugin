@@ -139,7 +139,7 @@ public class CodeInsightsContext {
      * @return whether the context is valid to use
      */
     public boolean isValid(final TaskListener logger) {
-        logger.error("Trying to resolve checks parameters from Bitbucket SCM...");
+        logger.getLogger().println("Trying to resolve checks parameters from Bitbucket SCM...");
 
         BitbucketSCMSource source = resolveSource();
         if (source == null) {
