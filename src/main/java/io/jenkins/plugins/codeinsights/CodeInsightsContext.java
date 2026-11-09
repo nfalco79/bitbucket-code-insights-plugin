@@ -16,19 +16,22 @@
  */
 package io.jenkins.plugins.codeinsights;
 
+import java.util.Optional;
+
+import org.apache.commons.lang3.StringUtils;
+import org.jenkinsci.plugins.displayurlapi.DisplayURLProvider;
+
 import com.cloudbees.jenkins.plugins.bitbucket.BitbucketSCMSource;
 import com.cloudbees.jenkins.plugins.bitbucket.api.endpoint.BitbucketEndpoint;
 import com.cloudbees.jenkins.plugins.bitbucket.api.endpoint.BitbucketEndpointProvider;
 import com.cloudbees.jenkins.plugins.bitbucket.api.endpoint.EndpointType;
+
 import edu.umd.cs.findbugs.annotations.CheckForNull;
 import hudson.model.Job;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import java.util.Optional;
 import jenkins.scm.api.SCMHead;
 import jenkins.scm.api.SCMRevision;
-import org.apache.commons.lang3.StringUtils;
-import org.jenkinsci.plugins.displayurlapi.DisplayURLProvider;
 
 public class CodeInsightsContext {
 
@@ -143,8 +146,6 @@ public class CodeInsightsContext {
 
         BitbucketSCMSource source = resolveSource();
         if (source == null) {
-            logger.error("Job does not use Bitbucket SCM");
-
             return false;
         }
 
